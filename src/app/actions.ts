@@ -300,10 +300,19 @@ export async function signOutUser() {
 
 export async function signInWithOAuthProvider(provider: 'google' | 'github') {
   const supabase = await createClient()
+  
+  // Try to use Vercel's provided URL variables, then custom site URL, then localhost
+  const getBaseUrl = () => {
+    if (process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}`;
+    if (process.env.NEXT_PUBLIC_VERCEL_URL) return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`;
+    if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+    return 'http://localhost:3000';
+  };
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+      redirectTo: `${getBaseUrl()}/auth/callback`,
     },
   })
 
