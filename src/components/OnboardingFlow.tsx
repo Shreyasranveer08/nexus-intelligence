@@ -321,17 +321,30 @@ export default function OnboardingFlow({ initialStep }: { initialStep: number })
     setCompetitors(competitors.filter((_, i) => i !== idx))
   }
 
-  const getAISuggestions = () => {
+  const getAISuggestions = async () => {
     setIsSuggesting(true)
-    setTimeout(() => {
-      const mockSuggestions = [
-        { name: 'Acme Corp', url: 'https://acmecorp.com' },
-        { name: 'Globex', url: 'https://globex.io' },
-        { name: 'Initech', url: 'https://initech.software' }
-      ]
-      setSuggestions(mockSuggestions)
+    try {
+      const { suggestRealCompetitors } = await import('@/app/actions')
+      const realSuggestions = await suggestRealCompetitors(
+        profile.companyName || 'Unknown', 
+        profile.industry || 'Technology'
+      )
+      
+      if (realSuggestions && realSuggestions.length > 0) {
+        setSuggestions(realSuggestions)
+      } else {
+        // Fallback if LLM fails or quota exhausted
+        setSuggestions([
+          { name: 'Direct Competitor 1', url: 'https://competitor1.com' },
+          { name: 'Direct Competitor 2', url: 'https://competitor2.com' },
+          { name: 'Direct Competitor 3', url: 'https://competitor3.com' }
+        ])
+      }
+    } catch (e) {
+      setSuggestions([])
+    } finally {
       setIsSuggesting(false)
-    }, 2000)
+    }
   }
 
   const runInitialScan = async () => {

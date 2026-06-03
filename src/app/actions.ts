@@ -614,3 +614,24 @@ export async function analyzeWebsite(url: string) {
     }
   };
 }
+
+export async function suggestRealCompetitors(companyName: string, industry: string) {
+  try {
+    const { generateWithFallback } = await import('@/lib/llmFallback');
+    const prompt = `You are an expert business analyst. Suggest 3 well-known real-world competitors for a company named "${companyName}" operating in the "${industry}" industry.
+Return ONLY a valid JSON array of objects, where each object has "name" and "url" properties. Provide the main homepage URL.
+Do not include any markdown formatting, backticks, or extra text. Just the raw JSON array.
+Example: [{"name":"Google","url":"https://google.com"},{"name":"Microsoft","url":"https://microsoft.com"}]`;
+
+    const { text } = await generateWithFallback('gemini-2.5-flash', prompt);
+    const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const suggestions = JSON.parse(cleanedText);
+    if (Array.isArray(suggestions)) {
+      return suggestions.slice(0, 3);
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to suggest competitors:", error);
+    return [];
+  }
+}
