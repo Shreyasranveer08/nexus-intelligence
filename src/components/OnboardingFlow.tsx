@@ -325,8 +325,8 @@ export default function OnboardingFlow({ initialStep }: { initialStep: number })
     setIsSuggesting(true)
     try {
       const realSuggestions = await suggestRealCompetitors(
-        profile.companyName || 'Unknown', 
-        profile.industry || 'Technology'
+        company.name || 'Unknown', 
+        company.industry || 'Technology'
       )
       
       if (realSuggestions && realSuggestions.length > 0) {
