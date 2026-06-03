@@ -2,18 +2,26 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Bell, Zap, TrendingUp, AlertTriangle } from 'lucide-react'
-
-// Dummy notifications for initial state
-const dummyNotifications = [
-  { id: 1, type: 'alert', title: 'High Threat Alert', message: 'A tracked competitor launched a new AI feature.', time: '2 hours ago', read: false },
-  { id: 2, type: 'report', title: 'Weekly Report Generated', message: 'Your market intelligence report is ready.', time: '1 day ago', read: false },
-  { id: 3, type: 'info', title: 'Competitor Added', message: 'A new competitor is now being tracked.', time: '2 days ago', read: true },
-]
+import { getRecentNotifications } from '@/app/actions'
 
 export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false)
-  const [notifications, setNotifications] = useState(dummyNotifications)
+  const [notifications, setNotifications] = useState<any[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const data = await getRecentNotifications()
+        if (data && data.length > 0) {
+          setNotifications(data)
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    fetchNotifications()
+  }, [])
 
   const unreadCount = notifications.filter(n => !n.read).length
 

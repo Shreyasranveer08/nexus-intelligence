@@ -657,3 +657,33 @@ export async function deleteUserAccount() {
   // or the client component can sign them out explicitly.
   return { success: true };
 }
+
+export async function getRecentNotifications() {
+  const user = await getUserProfile();
+  if (!user.is_authenticated || !user.id) return [];
+
+  const supabase = await createClient();
+  const { data: insights } = await supabase
+    .from('synthesized_insights')
+    .select('id, what_changed, why_it_matters, created_at, impact_score')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (!insights || insights.length === 0) return [];
+
+  return insights.map((insight: any) => {
+    let type = 'info';
+    if (insight.impact_score >= 8) type = 'alert';
+    else if (insight.impact_score >= 5) type = 'report';
+
+    return {
+      id: insight.id,
+      type,
+      title: insight.what_changed,
+      message: insight.why_it_matters,
+      time: new Date(insight.created_at).toLocaleDateString(),
+      read: false
+    };
+  });
+}
