@@ -46,6 +46,18 @@ export default async function MainLayout({
                   <BarChart3 className="w-5 h-5 mr-3 text-slate-400 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
                   Weekly Reports
                 </Link>
+                <Link href="/copilot" className="flex items-center px-2 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors group">
+                  <div className="w-5 h-5 mr-3 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-slate-400 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                      <path d="M5 3v4"/>
+                      <path d="M19 17v4"/>
+                      <path d="M3 5h4"/>
+                      <path d="M17 19h4"/>
+                    </svg>
+                  </div>
+                  Copilot
+                </Link>
               </nav>
             </div>
             
