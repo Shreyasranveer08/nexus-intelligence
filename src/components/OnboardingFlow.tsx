@@ -370,7 +370,7 @@ export default function OnboardingFlow({ initialStep }: { initialStep: number })
     }
     
     await completeOnboarding()
-    setStep(6) 
+    finishOnboarding()
   }
 
   const finishOnboarding = () => {
