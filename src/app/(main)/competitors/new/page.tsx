@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { addCompetitor } from '@/app/actions'
-import { Plus, X, ArrowLeft, Loader2, Building2 } from 'lucide-react'
+import { addCompetitor, suggestRealCompetitors } from '@/app/actions'
+import { Plus, X, ArrowLeft, Loader2, Building2, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 type UrlEntry = { url: string; type: string }
@@ -15,8 +15,39 @@ export default function NewCompetitorPage() {
   const [urls, setUrls] = useState<UrlEntry[]>([{ url: '', type: 'homepage' }])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  const [suggestions, setSuggestions] = useState<{name: string, url: string}[]>([])
+  const [isSuggesting, setIsSuggesting] = useState(false)
 
   const urlTypes = ['homepage', 'pricing', 'features', 'blog', 'changelog']
+
+  const getAISuggestions = async () => {
+    setIsSuggesting(true)
+    try {
+      const res = await fetch('/api/settings')
+      const data = await res.json()
+      
+      const companyName = data.company?.name || 'My Company'
+      const industry = data.company?.industry || 'Technology'
+      
+      const realSuggestions = await suggestRealCompetitors(companyName, industry)
+      if (realSuggestions && realSuggestions.length > 0) {
+        setSuggestions(realSuggestions)
+      } else {
+        setSuggestions([])
+      }
+    } catch (e) {
+      setSuggestions([])
+    } finally {
+      setIsSuggesting(false)
+    }
+  }
+
+  const addSuggestion = (s: {name: string, url: string}) => {
+    setName(s.name)
+    setUrls([{ url: s.url, type: 'homepage' }])
+    setSuggestions([])
+  }
 
   const handleAddUrl = () => {
     setUrls([...urls, { url: '', type: 'pricing' }])
@@ -68,6 +99,45 @@ export default function NewCompetitorPage() {
             {error}
           </div>
         )}
+
+        <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl">
+          <div className="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 flex items-center gap-2">
+                <Sparkles className="w-4 h-4" /> Not sure who to track?
+              </h3>
+              <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">Let our AI suggest relevant competitors based on your company profile.</p>
+            </div>
+            <button 
+              type="button"
+              onClick={getAISuggestions}
+              disabled={isSuggesting}
+              className="bg-white dark:bg-blue-900/40 hover:bg-blue-50 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center shadow-sm"
+            >
+              {isSuggesting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              {isSuggesting ? 'Analyzing...' : 'Suggest Competitors'}
+            </button>
+          </div>
+          
+          {suggestions.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-blue-100 dark:border-blue-900/30 flex flex-wrap gap-2">
+              {suggestions.map((s, i) => (
+                <button 
+                  key={i} 
+                  type="button"
+                  onClick={() => addSuggestion(s)}
+                  className="bg-white dark:bg-[#1a1a1a] border border-blue-200 dark:border-blue-800/50 shadow-sm rounded-lg px-3 py-2 flex items-center gap-2 hover:border-blue-500 hover:shadow transition-all text-left"
+                >
+                  <div>
+                    <div className="text-xs font-bold text-slate-800 dark:text-slate-200">{s.name}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">{s.url}</div>
+                  </div>
+                  <Plus className="w-3 h-3 text-blue-500 ml-2" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
