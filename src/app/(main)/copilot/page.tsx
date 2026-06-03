@@ -83,33 +83,144 @@ export default function CopilotPage() {
                   </div>
                 )}
                 
-                <div className={`max-w-[80%] rounded-2xl px-5 py-4 ${
-                  msg.role === 'user' 
-                    ? 'bg-blue-600 text-white shadow-md' 
-                    : 'bg-slate-50 dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/5 text-slate-800 dark:text-slate-200'
-                }`}>
-                  {msg.role !== 'user' ? (
-                    <div className="prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-800">
-                      <ReactMarkdown
-                        components={{
-                          h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-4" {...props}/>,
-                          h2: ({node, ...props}) => <h2 className="text-lg font-bold mb-3 mt-4" {...props}/>,
-                          h3: ({node, ...props}) => <h3 className="text-base font-bold mb-2 mt-3" {...props}/>,
-                          p: ({node, ...props}) => <p className="mb-3 leading-relaxed" {...props}/>,
-                          ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props}/>,
-                          ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props}/>,
-                          li: ({node, ...props}) => <li className="leading-relaxed" {...props}/>,
-                          strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-white" {...props}/>,
-                          a: ({node, ...props}) => <a className="text-indigo-600 dark:text-indigo-400 hover:underline" {...props}/>,
-                          code: ({node, ...props}) => <code className="bg-slate-100 dark:bg-slate-800 rounded px-1 py-0.5 text-sm font-mono" {...props}/>,
-                        }}
-                      >
-                        {msg.content}
-                      </ReactMarkdown>
+                <div className={`max-w-[85%] flex flex-col gap-3`}>
+                  {/* Text Content */}
+                  {msg.content && (
+                    <div className={`rounded-2xl px-5 py-4 ${
+                      msg.role === 'user' 
+                        ? 'bg-blue-600 text-white shadow-md self-end' 
+                        : 'bg-slate-50 dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/5 text-slate-800 dark:text-slate-200'
+                    }`}>
+                      {msg.role !== 'user' ? (
+                        <div className="prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-800">
+                          <ReactMarkdown
+                            components={{
+                              h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-4" {...props}/>,
+                              h2: ({node, ...props}) => <h2 className="text-lg font-bold mb-3 mt-4" {...props}/>,
+                              h3: ({node, ...props}) => <h3 className="text-base font-bold mb-2 mt-3" {...props}/>,
+                              p: ({node, ...props}) => <p className="mb-3 leading-relaxed" {...props}/>,
+                              ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props}/>,
+                              ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props}/>,
+                              li: ({node, ...props}) => <li className="leading-relaxed" {...props}/>,
+                              strong: ({node, ...props}) => <strong className="font-bold text-slate-900 dark:text-white" {...props}/>,
+                              a: ({node, ...props}) => <a className="text-indigo-600 dark:text-indigo-400 hover:underline" {...props}/>,
+                              code: ({node, ...props}) => <code className="bg-slate-100 dark:bg-slate-800 rounded px-1 py-0.5 text-sm font-mono" {...props}/>,
+                            }}
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   )}
+
+                  {/* Tool Invocations (Generative UI) */}
+                  {msg.toolInvocations?.map((toolInvocation: any) => {
+                    if (toolInvocation.toolName === 'generateComparisonChart') {
+                      return (
+                        <div key={toolInvocation.toolCallId} className="bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm mt-2 w-full max-w-2xl">
+                          <div className="flex items-center gap-2 mb-4 text-indigo-600 dark:text-indigo-400">
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                            <h3 className="font-semibold text-lg">{toolInvocation.args.title || 'Comparison Chart'}</h3>
+                          </div>
+                          <div className="space-y-4">
+                            {toolInvocation.args.data?.map((item: any, idx: number) => (
+                              <div key={idx} className="space-y-1.5">
+                                <div className="flex justify-between text-sm">
+                                  <span className="font-medium text-slate-700 dark:text-slate-300">{item.category}</span>
+                                  <span className="text-slate-500 text-xs">Our Score: {item.ourScore}/10 | {item.competitorName}: {item.competitorScore}/10</span>
+                                </div>
+                                <div className="flex h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                  <div className="bg-blue-500 h-full" style={{ width: \`\${(item.ourScore / 10) * 100}%\` }} title="Us" />
+                                </div>
+                                <div className="flex h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-1">
+                                  <div className="bg-rose-500 h-full" style={{ width: \`\${(item.competitorScore / 10) * 100}%\` }} title={item.competitorName} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    if (toolInvocation.toolName === 'createBattlecard') {
+                      const args = toolInvocation.args;
+                      return (
+                        <div key={toolInvocation.toolCallId} className="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl mt-2 w-full max-w-2xl text-white">
+                          <div className="flex items-center justify-between border-b border-slate-700 pb-4 mb-4">
+                            <h3 className="font-bold text-xl text-white flex items-center gap-2">
+                              <svg className="w-5 h-5 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                              Battlecard: {args.competitorName}
+                            </h3>
+                            <span className="text-xs bg-rose-500/20 text-rose-300 px-2.5 py-1 rounded-full border border-rose-500/30">Confidential</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-6 mb-6">
+                            <div>
+                              <h4 className="text-emerald-400 font-semibold text-sm mb-2 flex items-center gap-1.5"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5"/></svg> Their Strengths</h4>
+                              <ul className="space-y-1.5">
+                                {args.strengths?.map((s: string, i: number) => <li key={i} className="text-sm text-slate-300 flex items-start gap-1.5"><span className="text-emerald-500 mt-0.5">•</span> <span>{s}</span></li>)}
+                              </ul>
+                            </div>
+                            <div>
+                              <h4 className="text-rose-400 font-semibold text-sm mb-2 flex items-center gap-1.5"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg> Their Weaknesses</h4>
+                              <ul className="space-y-1.5">
+                                {args.weaknesses?.map((w: string, i: number) => <li key={i} className="text-sm text-slate-300 flex items-start gap-1.5"><span className="text-rose-500 mt-0.5">•</span> <span>{w}</span></li>)}
+                              </ul>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-white/5 rounded-xl p-4 border border-white/10 mb-4">
+                            <h4 className="text-indigo-300 font-semibold text-xs uppercase tracking-wider mb-1">Our Advantage (How to Win)</h4>
+                            <p className="text-sm leading-relaxed">{args.ourAdvantage}</p>
+                          </div>
+                          
+                          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                            <h4 className="text-slate-400 font-semibold text-xs uppercase tracking-wider mb-1">Pricing Strategy</h4>
+                            <p className="text-sm leading-relaxed">{args.pricingStrategy}</p>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    if (toolInvocation.toolName === 'generateExecutionPlan') {
+                      const args = toolInvocation.args;
+                      return (
+                        <div key={toolInvocation.toolCallId} className="bg-white dark:bg-[#1a1a1a] border border-indigo-200 dark:border-indigo-900/50 rounded-2xl p-6 shadow-sm mt-2 w-full max-w-2xl">
+                          <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+                            <svg className="w-5 h-5 text-indigo-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            {args.title}
+                          </h3>
+                          <p className="text-sm text-slate-600 dark:text-slate-400 mb-5 pb-4 border-b border-slate-100 dark:border-white/5">{args.objective}</p>
+                          
+                          <div className="space-y-4">
+                            {args.steps?.map((step: any, i: number) => (
+                              <div key={i} className="flex gap-4">
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm border border-indigo-100 dark:border-indigo-500/20">
+                                  {i + 1}
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
+                                    {step.title}
+                                    <span className="text-[10px] uppercase tracking-wider bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">{step.owner}</span>
+                                  </h4>
+                                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{step.description}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={toolInvocation.toolCallId} className="flex items-center gap-2 text-slate-400 text-sm mt-2 bg-slate-50 dark:bg-white/5 px-3 py-2 rounded-lg w-fit border border-slate-200 dark:border-white/5">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Generating {toolInvocation.toolName}...
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {msg.role === 'user' && (
