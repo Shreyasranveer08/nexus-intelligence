@@ -4,27 +4,13 @@
 import React, { useRef, useEffect } from 'react'
 import { Send, Sparkles, MessageSquare, Hexagon, Loader2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
-import { useChat } from '@ai-sdk/react'
+import { useChat } from 'ai/react'
 
 export default function CopilotPage() {
-  const { messages, sendMessage, status, stop } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
     api: '/api/copilot',
   })
   
-  const [input, setInput] = React.useState('');
-  const isLoading = status === 'in_progress';
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    sendMessage({ role: 'user', content: input });
-    setInput('');
-  };
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -44,7 +30,9 @@ export default function CopilotPage() {
 
   const handleSuggestedPrompt = (prompt: string) => {
     try {
-      sendMessage({ role: 'user', content: prompt });
+      if (typeof append === 'function') {
+        append({ role: 'user', content: prompt });
+      }
     } catch (e) {
       console.error('Suggest prompt error:', e);
     }
