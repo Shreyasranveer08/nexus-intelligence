@@ -635,3 +635,25 @@ Example: [{"name":"Google","url":"https://google.com"},{"name":"Microsoft","url"
     return [];
   }
 }
+
+export async function deleteUserAccount() {
+  const user = await getUserProfile();
+  if (!user.is_authenticated || !user.id) throw new Error('Unauthorized');
+
+  const { createClient } = await import('@supabase/supabase-js');
+  // Use Service Role Key to bypass RLS and delete the user from auth.users
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id);
+  if (error) {
+    console.error('Failed to delete user account:', error);
+    throw new Error('Failed to delete user account');
+  }
+
+  // Next.js will handle the client-side redirect in the UI when the session is lost, 
+  // or the client component can sign them out explicitly.
+  return { success: true };
+}

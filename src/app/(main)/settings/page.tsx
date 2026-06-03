@@ -189,6 +189,30 @@ export default function SettingsPage() {
                 </select>
               </div>
             </div>
+
+            <div className="pt-6 mt-6 border-t border-red-100 dark:border-red-900/30">
+              <h4 className="text-sm font-semibold text-red-600 dark:text-red-400 mb-2">Danger Zone</h4>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Permanently delete your account and all associated data. This action cannot be undone.</p>
+              <button 
+                onClick={async () => {
+                  if(confirm('Are you absolutely sure you want to delete your account? All your data will be permanently lost.')) {
+                    try {
+                      const { deleteUserAccount } = await import('@/app/actions');
+                      const { createClient } = await import('@/lib/supabase/client');
+                      await deleteUserAccount();
+                      const supabase = createClient();
+                      await supabase.auth.signOut();
+                      window.location.href = '/auth/login';
+                    } catch (e) {
+                      setMessage('Failed to delete account.');
+                    }
+                  }
+                }}
+                className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-2 rounded-lg transition-colors"
+              >
+                Delete Account
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">
