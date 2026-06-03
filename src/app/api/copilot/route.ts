@@ -23,22 +23,32 @@ export async function POST(req: NextRequest) {
 
     const latestMessage = messages[messages.length - 1].content;
 
-    // 1. Generate Embedding for User Query
-    const { embedding } = await embed({
-      model: google.textEmbeddingModel('text-embedding-004'),
-      value: latestMessage,
-    });
+    // 1. Generate Embedding for User Query (Fault-Tolerant)
+    let embedding = null;
+    try {
+      const result = await embed({
+        model: google.textEmbeddingModel('text-embedding-004'),
+        value: latestMessage,
+      });
+      embedding = result.embedding;
+    } catch (e: any) {
+      console.warn("Embedding failed, falling back to non-RAG mode:", e.message);
+    }
 
-    // 2. Retrieve Relevant Context via RAG
-    const { data: relevantDocs, error: rpcError } = await supabase.rpc('match_documents', {
-      query_embedding: embedding,
-      match_threshold: 0.5,
-      match_count: 10,
-      p_user_id: user.id
-    });
-
-    if (rpcError) {
-      console.warn("RAG Error (fallback to basic mode):", rpcError);
+    // 2. Retrieve Relevant Context via RAG (Only if embedding succeeded)
+    let relevantDocs = [];
+    if (embedding) {
+      const { data, error: rpcError } = await supabase.rpc('match_documents', {
+        query_embedding: embedding,
+        match_threshold: 0.5,
+        match_count: 10,
+        p_user_id: user.id
+      });
+      if (rpcError) {
+        console.warn("RAG Error (fallback to basic mode):", rpcError);
+      } else {
+        relevantDocs = data || [];
+      }
     }
 
     const contextStrings = relevantDocs?.map((doc: any, i: number) => {
