@@ -9,6 +9,7 @@ import { useChat } from '@ai-sdk/react'
 export default function CopilotPage() {
   const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, append } = useChat({
     api: '/api/copilot',
+    generateId: () => crypto.randomUUID(),
   })
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -30,13 +31,15 @@ export default function CopilotPage() {
 
   const handleSuggestedPrompt = (prompt: string) => {
     try {
-      setInput(prompt);
-      setTimeout(() => {
-        const form = document.querySelector('form');
-        if (form) {
-          form.requestSubmit();
-        }
-      }, 50);
+      if (typeof append === 'function') {
+        append({ role: 'user', content: prompt });
+      } else {
+        setInput(prompt);
+        setTimeout(() => {
+          const form = document.querySelector('form');
+          if (form) form.requestSubmit();
+        }, 50);
+      }
     } catch (e) {
       console.error('Suggest prompt error:', e);
     }
