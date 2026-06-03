@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import { useChat } from 'ai/react'
 
 export default function CopilotPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, append, error } = useChat({
     api: '/api/copilot',
   })
   
@@ -274,6 +274,20 @@ export default function CopilotPage() {
                 <div className="max-w-[80%] rounded-2xl px-5 py-4 bg-slate-50 dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/5 text-slate-800 dark:text-slate-200">
                   <div className="flex items-center gap-2 text-slate-400 text-sm">
                     <Loader2 className="w-4 h-4 animate-spin" /> Retrieving secure context...
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="flex gap-4 justify-start mt-4">
+                <div className="w-8 h-8 rounded-lg bg-rose-500 flex flex-shrink-0 items-center justify-center shadow-sm mt-1 text-white font-bold">
+                  !
+                </div>
+                <div className="max-w-[80%] rounded-2xl px-5 py-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-800 dark:text-rose-200">
+                  <div className="flex flex-col gap-1 text-sm">
+                    <strong className="font-semibold">Error communicating with Nexus:</strong>
+                    <span>{error.message || 'Unknown error occurred'}</span>
                   </div>
                 </div>
               </div>
