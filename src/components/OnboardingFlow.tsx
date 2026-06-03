@@ -13,7 +13,7 @@ const INDUSTRIES = [
 ]
 import { motion, AnimatePresence } from 'framer-motion'
 import { Hexagon, ArrowRight, Briefcase, Code, User, Megaphone, Zap, Building2, Globe, Target, AlertTriangle, Shield, TrendingUp, Search, Plus, Trash2, CheckCircle2, Loader2, Sparkles, Lock, Activity } from 'lucide-react'
-import { updateOnboardingProgress, completeOnboarding, addCompetitor } from '@/app/actions'
+import { updateOnboardingProgress, completeOnboarding, addCompetitor, suggestRealCompetitors } from '@/app/actions'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 
@@ -324,7 +324,6 @@ export default function OnboardingFlow({ initialStep }: { initialStep: number })
   const getAISuggestions = async () => {
     setIsSuggesting(true)
     try {
-      const { suggestRealCompetitors } = await import('@/app/actions')
       const realSuggestions = await suggestRealCompetitors(
         profile.companyName || 'Unknown', 
         profile.industry || 'Technology'
