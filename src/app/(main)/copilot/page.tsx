@@ -29,11 +29,20 @@ export default function CopilotPage() {
   ]
 
   const handleSuggestedPrompt = (prompt: string) => {
-    append({ role: 'user', content: prompt })
+    if (typeof append === 'function') {
+      append({ role: 'user', content: prompt })
+    } else {
+      setInput(prompt)
+      setTimeout(() => {
+        const form = document.querySelector('form')
+        if (form) form.requestSubmit()
+      }, 50)
+    }
   }
 
   const handleExportPDF = async () => {
-    const html2pdf = (await import('html2pdf.js')).default;
+    const html2pdfModule = await import('html2pdf.js');
+    const html2pdf = typeof html2pdfModule.default === 'function' ? html2pdfModule.default : html2pdfModule;
     const element = document.getElementById('chat-container');
     
     if (element) {
