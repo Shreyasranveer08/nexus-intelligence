@@ -102,7 +102,7 @@ ${contextText}`;
       }
     });
 
-    return result.toTextStreamResponse();
+    return result.toDataStreamResponse();
 
   } catch (error: any) {
     console.error('Copilot Error:', error);
