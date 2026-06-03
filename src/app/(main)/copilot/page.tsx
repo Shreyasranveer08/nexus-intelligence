@@ -1,18 +1,29 @@
 // @ts-nocheck
 'use client'
 
-import { useRef, useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { Send, Sparkles, MessageSquare, Hexagon, Loader2 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { useChat } from '@ai-sdk/react'
 
 export default function CopilotPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, append } = useChat({
+  const { messages, sendMessage, status, stop } = useChat({
     api: '/api/copilot',
-    generateId: () => crypto.randomUUID(),
   })
+  
+  const [input, setInput] = React.useState('');
+  const isLoading = status === 'in_progress';
 
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    sendMessage({ role: 'user', content: input });
+    setInput('');
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -29,17 +40,11 @@ export default function CopilotPage() {
     "Create an action plan based on recent competitor activity."
   ]
 
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
   const handleSuggestedPrompt = (prompt: string) => {
     try {
-      if (typeof append === 'function') {
-        append({ role: 'user', content: prompt });
-      } else {
-        setInput(prompt);
-        setTimeout(() => {
-          const form = document.querySelector('form');
-          if (form) form.requestSubmit();
-        }, 50);
-      }
+      sendMessage({ role: 'user', content: prompt });
     } catch (e) {
       console.error('Suggest prompt error:', e);
     }
