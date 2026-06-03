@@ -31,6 +31,23 @@ export default function CopilotPage() {
     append({ role: 'user', content: prompt })
   }
 
+  const handleExportPDF = async () => {
+    const html2pdf = (await import('html2pdf.js')).default;
+    const element = document.getElementById('chat-container');
+    
+    if (element) {
+      const opt = {
+        margin:       0.5,
+        filename:     'Nexus_Copilot_Intelligence_Report.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, // Force white bg for PDF
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] bg-white dark:bg-[#111] rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden relative">
       
@@ -45,10 +62,20 @@ export default function CopilotPage() {
             <p className="text-xs text-slate-500 dark:text-slate-400">Deep RAG Intelligence Engine</p>
           </div>
         </div>
+        
+        {messages.length > 0 && (
+          <button 
+            onClick={handleExportPDF}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/10 transition-colors text-slate-700 dark:text-slate-300 shadow-sm"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export PDF
+          </button>
+        )}
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div id="chat-container" className="flex-1 overflow-y-auto p-6 space-y-6 bg-white dark:bg-[#111]">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center max-w-2xl mx-auto">
             <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mb-6">
