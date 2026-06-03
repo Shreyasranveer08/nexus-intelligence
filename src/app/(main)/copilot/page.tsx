@@ -9,6 +9,7 @@ import { useChat } from 'ai/react'
 export default function CopilotPage() {
   const { messages, input, handleInputChange, handleSubmit, isLoading, append, error } = useChat({
     api: '/api/copilot',
+    generateId: () => crypto.randomUUID(),
   })
   
   const scrollToBottom = () => {
