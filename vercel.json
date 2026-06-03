@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/monitor",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/report",
+      "schedule": "0 9 * * 1"
+    }
+  ]
+}
