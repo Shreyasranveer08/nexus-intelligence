@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     let embedding = null;
     try {
       const result = await embed({
-        model: google.textEmbeddingModel('text-embedding-004'),
+        model: google.textEmbeddingModel('gemini-embedding-2'),
         value: latestMessage,
       });
       embedding = result.embedding;
@@ -75,7 +75,7 @@ ${contextText}`;
 
     // 4. Stream Response with Vercel AI SDK
     const result = await streamText({
-      model: google('gemini-1.5-flash'),
+      model: google('gemini-2.0-flash'),
       system: systemInstruction,
       messages: messages,
       tools: {
