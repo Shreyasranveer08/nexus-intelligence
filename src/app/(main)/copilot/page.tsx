@@ -290,7 +290,7 @@ export default function CopilotPage() {
           />
           <button
             type="submit"
-            disabled={!input.trim() || isLoading}
+            disabled={!input?.trim() || isLoading}
             className="absolute right-3 w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 dark:disabled:bg-white/5 text-white disabled:text-slate-400 flex items-center justify-center transition-colors shadow-sm"
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
