@@ -60,8 +60,8 @@ If the user asks for an execution plan or next steps, you MUST call the \`genera
 ${contextText}`;
 
     // 4. Stream Response with Vercel AI SDK
-    const result = streamText({
-      model: google('gemini-2.5-flash'),
+    const result = await streamText({
+      model: google('gemini-1.5-flash'),
       system: systemInstruction,
       messages: messages,
       tools: {
