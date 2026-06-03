@@ -29,14 +29,16 @@ export default function CopilotPage() {
   ]
 
   const handleSuggestedPrompt = (prompt: string) => {
-    if (typeof append === 'function') {
-      append({ role: 'user', content: prompt })
-    } else {
-      setInput(prompt)
+    try {
+      setInput(prompt);
       setTimeout(() => {
-        const form = document.querySelector('form')
-        if (form) form.requestSubmit()
-      }, 50)
+        const form = document.querySelector('form');
+        if (form) {
+          form.requestSubmit();
+        }
+      }, 50);
+    } catch (e) {
+      console.error('Suggest prompt error:', e);
     }
   }
 
