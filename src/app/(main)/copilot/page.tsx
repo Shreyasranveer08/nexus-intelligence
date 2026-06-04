@@ -8,11 +8,31 @@ import { useChat } from 'ai/react'
 
 export default function CopilotPage() {
   const [isDeepResearch, setIsDeepResearch] = React.useState(false)
-  const { messages, input, handleInputChange, handleSubmit, isLoading, append, error } = useChat({
+  const [isDeepResearch, setIsDeepResearch] = React.useState(false)
+  const { messages, setMessages, input, handleInputChange, handleSubmit, isLoading, append, error } = useChat({
     api: '/api/copilot',
     body: { isDeepResearch },
     generateId: () => crypto.randomUUID(),
   })
+  
+  // Load chat history on mount
+  useEffect(() => {
+    const savedChats = localStorage.getItem('nexus_copilot_chat_history');
+    if (savedChats) {
+      try {
+        setMessages(JSON.parse(savedChats));
+      } catch (e) {
+        console.error('Failed to parse chat history', e);
+      }
+    }
+  }, [setMessages]);
+
+  // Save chat history on update
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('nexus_copilot_chat_history', JSON.stringify(messages));
+    }
+  }, [messages]);
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -115,6 +135,18 @@ export default function CopilotPage() {
         
         {messages.length > 0 && (
           <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                if(confirm('Clear chat history?')) {
+                  setMessages([]);
+                  localStorage.removeItem('nexus_copilot_chat_history');
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 transition-colors text-slate-700 dark:text-slate-300 shadow-sm"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              Clear Chat
+            </button>
             <button 
               onClick={handleExportPPT}
               className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/10 transition-colors text-slate-700 dark:text-slate-300 shadow-sm"
@@ -351,14 +383,14 @@ export default function CopilotPage() {
 
       {/* Input Area */}
       <div className="p-4 bg-white dark:bg-[#111] border-t border-slate-200 dark:border-white/10 z-10">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative flex flex-col gap-3">
-          <div className="flex items-center justify-between px-2">
+        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative flex flex-col gap-2">
+          <div className="flex items-center justify-between px-1">
             <label className="flex items-center gap-2 cursor-pointer group">
               <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isDeepResearch ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}>
-                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isDeepResearch ? 'translate-x-4.5' : 'translate-x-1'}`} />
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isDeepResearch ? 'translate-x-4.5' : 'translate-x-0.5'}`} style={{ transform: isDeepResearch ? 'translateX(1.125rem)' : 'translateX(0.125rem)' }} />
               </div>
-              <span className={`text-xs font-medium transition-colors ${isDeepResearch ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
-                Deep Research <span className="text-[10px] opacity-70">(Multi-step reasoning)</span>
+              <span className={`text-sm font-medium transition-colors ${isDeepResearch ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200'}`}>
+                Deep Research <span className="text-[11px] opacity-70 ml-1 font-normal">(Multi-step reasoning & structured reports)</span>
               </span>
               <input
                 type="checkbox"
@@ -368,21 +400,21 @@ export default function CopilotPage() {
               />
             </label>
           </div>
-          <div className="relative flex items-center w-full">
+          <div className="relative flex items-center w-full mt-1">
             <input
               type="text"
               value={input}
               onChange={handleInputChange}
               disabled={isLoading}
               placeholder={isDeepResearch ? "Ask a complex strategic question..." : "Ask about competitors, strategies, or recent reports..."}
-              className="w-full pl-6 pr-14 py-4 bg-slate-50 dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-1 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white placeholder-slate-400 transition-all disabled:opacity-50 shadow-sm"
+              className="w-full pl-6 pr-14 py-4 bg-slate-50 dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white placeholder-slate-400 transition-all disabled:opacity-50 shadow-sm text-base"
             />
             <button
               type="submit"
               disabled={!input?.trim() || isLoading}
               className="absolute right-3 w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 dark:disabled:bg-white/5 text-white disabled:text-slate-400 flex items-center justify-center transition-colors shadow-sm"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-0.5" />}
             </button>
           </div>
         </form>
