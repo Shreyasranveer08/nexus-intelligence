@@ -8,7 +8,6 @@ import { useChat } from 'ai/react'
 
 export default function CopilotPage() {
   const [isDeepResearch, setIsDeepResearch] = React.useState(false)
-  const [isDeepResearch, setIsDeepResearch] = React.useState(false)
   const { messages, setMessages, input, handleInputChange, handleSubmit, isLoading, append, error } = useChat({
     api: '/api/copilot',
     body: { isDeepResearch },
