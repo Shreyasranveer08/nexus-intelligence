@@ -1,13 +1,8 @@
 // @ts-nocheck
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { streamText, embed, tool } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { tool } from 'ai';
 import { z } from 'zod';
-
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
-});
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,17 +18,8 @@ export async function POST(req: NextRequest) {
 
     const latestMessage = messages[messages.length - 1].content;
 
-    // 1. Generate Embedding for User Query (Fault-Tolerant)
+    // 1. Generate Embedding for User Query (Disabled - APIs other than Perplexity removed per user request)
     let embedding = null;
-    try {
-      const result = await embed({
-        model: google.textEmbeddingModel('gemini-embedding-2'),
-        value: latestMessage,
-      });
-      embedding = result.embedding;
-    } catch (e: any) {
-      console.warn("Embedding failed, falling back to non-RAG mode:", e.message);
-    }
 
     // 2. Retrieve Relevant Context via RAG (Only if embedding succeeded)
     let relevantDocs = [];
