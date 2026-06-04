@@ -9,8 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@ai-sdk/google": "^0.0.52",
-    "@google/genai": "^2.7.0",
+    "@ai-sdk/google": "^3.0.80",
+    "@google/genai": "^2.8.0",
     "@google/generative-ai": "^0.24.1",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
@@ -27,7 +27,7 @@
     "react-hot-toast": "^2.6.0",
     "react-markdown": "^10.1.0",
     "recharts": "^3.8.1",
-    "zod": "^3.23.8"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -38,5 +38,19 @@
     "eslint-config-next": "16.2.7",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@ai-sdk/google": {
+      "zod": "$zod"
+    },
+    "@ai-sdk/react": {
+      "zod": "$zod"
+    },
+    "ai": {
+      "zod": "$zod"
+    },
+    "zod-to-json-schema": {
+      "zod": "$zod"
+    }
   }
 }
