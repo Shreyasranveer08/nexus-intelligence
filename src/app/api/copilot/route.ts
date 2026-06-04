@@ -46,22 +46,18 @@ export async function POST(req: NextRequest) {
       : `\n\n(No specific database records found for this query. Rely on general knowledge but inform the user.)\n`;
 
     // 3. Define System Instruction
-    const systemInstruction = `You are Nexus Copilot, an elite strategic intelligence advisor. 
-You are speaking directly to the founder/executive. Use a sharp, professional, and highly actionable tone.
-Do not use generic fluff. Dive straight into strategic insights.
-
-You have access to the user's secure database via Retrieval-Augmented Generation (RAG).
-Use the retrieved knowledge base below to answer the user's query.
-
-If the user asks to compare competitors, you MUST call the \`generateComparisonChart\` tool in addition to your text explanation.
-If the user asks for a battlecard or strategic overview of a specific competitor, you MUST call the \`createBattlecard\` tool.
-If the user asks for an execution plan or next steps, you MUST call the \`generateExecutionPlan\` tool.
+    const systemInstruction = `You are Nexus Copilot, an elite deep-research analyst and strategic intelligence advisor. 
+You function exactly like a high-end research engine (like Perplexity).
+Your goal is to provide deeply analytical, comprehensively researched, and structured answers.
+Always structure your response with clear headings, bullet points, and actionable takeaways.
+Do not use generic fluff. Dive straight into data, facts, and strategic insights.
 
 ${contextText}`;
 
     // 4. Fetch Response from RapidAPI Perplexity
     try {
-      const fullPrompt = `${systemInstruction}\n\nUser Query: ${latestMessage}`;
+      const conversationHistory = messages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
+      const fullPrompt = `${systemInstruction}\n\n=== CONVERSATION HISTORY ===\n${conversationHistory}\n\nInstruction: Provide a deeply researched, structured, and analytical response to the latest USER query.`;
       
       const response = await fetch('https://perplexity2.p.rapidapi.com/', {
         method: 'POST',
@@ -85,6 +81,11 @@ ${contextText}`;
         responseText = data.text;
       } else {
         responseText = JSON.stringify(data);
+      }
+
+      // Append Web Search Sources if available (to mimic Perplexity's citations)
+      if (data.webSearchQueries && data.webSearchQueries.length > 0) {
+        responseText += `\n\n---\n**🌐 Sources & Live Web Searches:**\n` + data.webSearchQueries.map((q: string) => `- ${q}`).join('\n');
       }
 
       // Convert static response to Vercel AI SDK format (0:"chunk")
