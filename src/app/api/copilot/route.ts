@@ -75,11 +75,19 @@ ${contextText}`;
 
       const data = await response.json();
       let responseText = "I couldn't generate a response from Perplexity.";
-      if (data.content && data.content.parts && data.content.parts.length > 0) {
-        responseText = data.content.parts[0].text;
-      } else if (data.text) {
-        responseText = data.text;
-      } else {
+      try {
+        if (data.choices && Array.isArray(data.choices)) {
+          responseText = data.choices[0]?.message?.content || data.choices[0]?.text || JSON.stringify(data.choices);
+        } else if (data.choices && data.choices.content && data.choices.content.parts) {
+          responseText = data.choices.content.parts[0].text;
+        } else if (data.content && data.content.parts && data.content.parts.length > 0) {
+          responseText = data.content.parts[0].text;
+        } else if (data.text) {
+          responseText = data.text;
+        } else {
+          responseText = JSON.stringify(data);
+        }
+      } catch (err) {
         responseText = JSON.stringify(data);
       }
 
