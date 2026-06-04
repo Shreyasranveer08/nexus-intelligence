@@ -73,62 +73,39 @@ If the user asks for an execution plan or next steps, you MUST call the \`genera
 
 ${contextText}`;
 
-    // 4. Stream Response with Vercel AI SDK
+    // 4. Fetch Response from RapidAPI Perplexity
     try {
-      const result = await streamText({
-        model: google('gemini-2.5-flash'),
-        system: systemInstruction,
-        messages: messages,
-        tools: {
-          generateComparisonChart: tool({
-            description: 'Generates a visual comparison chart of features or metrics between competitors. Call this when asked to compare competitors.',
-            parameters: z.object({
-              title: z.string().describe('Title of the chart (e.g., Feature Comparison)'),
-              data: z.array(z.object({
-                category: z.string().describe('The feature or metric being compared (e.g., Pricing, AI Features)'),
-                ourScore: z.number().min(0).max(10).describe('Our score out of 10'),
-                competitorScore: z.number().min(0).max(10).describe('Competitor score out of 10'),
-                competitorName: z.string().describe('Name of the competitor being compared against')
-              }))
-            }),
-          }),
-          createBattlecard: tool({
-            description: 'Generates a strategic battlecard for a specific competitor. Call this when asked for a deep dive, battlecard, or profile on a competitor.',
-            parameters: z.object({
-              competitorName: z.string().describe('Name of the competitor'),
-              strengths: z.array(z.string()).describe('Top 3 strengths of the competitor'),
-              weaknesses: z.array(z.string()).describe('Top 3 weaknesses of the competitor'),
-              ourAdvantage: z.string().describe('Our key competitive advantage against them'),
-              pricingStrategy: z.string().describe('Summary of their pricing strategy')
-            }),
-          }),
-          generateExecutionPlan: tool({
-            description: 'Generates a structured execution plan. Call this when the user asks for an action plan or next steps.',
-            parameters: z.object({
-              title: z.string().describe('Title of the execution plan'),
-              objective: z.string().describe('The primary goal'),
-              steps: z.array(z.object({
-                title: z.string().describe('Step title'),
-                description: z.string().describe('Detailed action required'),
-                owner: z.string().describe('Who should own this (e.g., Marketing, Product, Sales)')
-              }))
-            }),
-          })
+      const fullPrompt = `${systemInstruction}\n\nUser Query: ${latestMessage}`;
+      
+      const response = await fetch('https://perplexity2.p.rapidapi.com/', {
+        method: 'POST',
+        headers: {
+          'x-rapidapi-key': '13b128e151msh283cee2ed529199p124acajsnfd4ec57fad95',
+          'x-rapidapi-host': 'perplexity2.p.rapidapi.com',
+          'Content-Type': 'application/json'
         },
+        body: JSON.stringify({ content: fullPrompt })
       });
 
-      return result.toDataStreamResponse();
-    } catch (e: any) {
-      console.error("AI Streaming Error:", e);
-      
-      // FALLBACK: When Quota Exhausted, return a mock response that Vercel AI SDK can parse
+      if (!response.ok) {
+        throw new Error(`RapidAPI Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let responseText = "I couldn't generate a response from Perplexity.";
+      if (data.content && data.content.parts && data.content.parts.length > 0) {
+        responseText = data.content.parts[0].text;
+      } else if (data.text) {
+        responseText = data.text;
+      } else {
+        responseText = JSON.stringify(data);
+      }
+
+      // Convert static response to Vercel AI SDK format (0:"chunk")
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {
-          const message = "⚠️ **Nexus Copilot (Mock Mode):** It looks like the Gemini API quota has been exhausted. To ensure you can still test the UI, I'm returning a simulated response. \n\nIf you asked for a competitor comparison, execution plan, or battlecard, those tools are structurally wired and ready to trigger once the quota resets or a new key is provided.";
-          
-          // AI SDK format: 0:"text chunk"
-          controller.enqueue(encoder.encode(`0:${JSON.stringify(message)}\n`));
+          controller.enqueue(encoder.encode(`0:${JSON.stringify(responseText)}\n`));
           
           // Optionally, simulate a mock tool call for generateComparisonChart if the user asked for "compare"
           if (latestMessage.toLowerCase().includes("compare")) {
@@ -136,14 +113,13 @@ ${contextText}`;
                toolCallId: "call_mock_123",
                toolName: "generateComparisonChart",
                args: {
-                 title: "Mock Feature Comparison",
+                 title: "Feature Comparison (via Perplexity API)",
                  data: [
                    { category: "AI Features", ourScore: 9, competitorScore: 7, competitorName: "Acme Corp" },
                    { category: "Pricing", ourScore: 8, competitorScore: 6, competitorName: "Acme Corp" }
                  ]
                }
              };
-             // AI SDK format for tool call: 9:{"toolCallId":...,"toolName":...,"args":...}
              controller.enqueue(encoder.encode(`9:${JSON.stringify(mockToolCall)}\n`));
           }
           
@@ -157,6 +133,9 @@ ${contextText}`;
           'x-vercel-ai-data-stream': 'v1'
         }
       });
+    } catch (e: any) {
+      console.error("AI Fetching Error:", e);
+      return new Response(JSON.stringify({ error: e.message || 'Internal Server Error' }), { status: 500 });
     }
 
   } catch (error: any) {

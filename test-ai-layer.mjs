@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 
 
 const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY_BACKUP,
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 const supabase = createClient(
