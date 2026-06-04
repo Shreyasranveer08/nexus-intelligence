@@ -7,8 +7,10 @@ import ReactMarkdown from 'react-markdown'
 import { useChat } from 'ai/react'
 
 export default function CopilotPage() {
+  const [isDeepResearch, setIsDeepResearch] = React.useState(false)
   const { messages, input, handleInputChange, handleSubmit, isLoading, append, error } = useChat({
     api: '/api/copilot',
+    body: { isDeepResearch },
     generateId: () => crypto.randomUUID(),
   })
   
@@ -23,7 +25,7 @@ export default function CopilotPage() {
   const suggestedPrompts = [
     "What is my biggest competitive threat?",
     "Compare our features to competitors.",
-    "What happened in the last 30 days?",
+    "Generate a comprehensive Executive Report.",
     "Create an action plan based on recent competitor activity."
   ]
 
@@ -57,6 +59,45 @@ export default function CopilotPage() {
     }
   };
 
+  const handleExportPPT = async () => {
+    try {
+      const pptxgen = (await import('pptxgenjs')).default;
+      const pres = new pptxgen();
+      
+      pres.title = "Nexus Intelligence Report";
+      pres.company = "Nexus";
+      
+      // Add Title Slide
+      const titleSlide = pres.addSlide();
+      titleSlide.addText("Nexus Copilot Intelligence Report", { x: 1, y: 2, w: 8, h: 1, fontSize: 36, bold: true, color: "363636", align: 'center' });
+      titleSlide.addText(`Generated on: ${new Date().toLocaleDateString()}`, { x: 1, y: 3.5, w: 8, h: 1, fontSize: 18, color: "888888", align: 'center' });
+      
+      // Parse messages and add slides
+      const aiMessages = messages.filter(m => m.role !== 'user');
+      if (aiMessages.length === 0) {
+        const slide = pres.addSlide();
+        slide.addText("No insights generated yet.", { x: 1, y: 2, w: 8, h: 1, fontSize: 24, align: 'center' });
+      } else {
+        aiMessages.forEach((msg, idx) => {
+          if (msg.content) {
+            const slide = pres.addSlide();
+            slide.addText(`Insight ${idx + 1}`, { x: 0.5, y: 0.5, w: 9, h: 0.5, fontSize: 24, bold: true, color: "363636" });
+            
+            // Clean up markdown a bit for PPT
+            let cleanText = msg.content.replace(/[*]/g, '').replace(/#/g, '');
+            if (cleanText.length > 800) cleanText = cleanText.substring(0, 800) + '... (truncated)';
+            
+            slide.addText(cleanText, { x: 0.5, y: 1.5, w: 9, h: 4, fontSize: 14, color: "666666", valign: 'top' });
+          }
+        });
+      }
+      
+      pres.writeFile({ fileName: "Nexus_Copilot_Intelligence_Report.pptx" });
+    } catch (e) {
+      console.error("Export PPT error:", e);
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] bg-white dark:bg-[#111] rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden relative">
       
@@ -73,13 +114,22 @@ export default function CopilotPage() {
         </div>
         
         {messages.length > 0 && (
-          <button 
-            onClick={handleExportPDF}
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/10 transition-colors text-slate-700 dark:text-slate-300 shadow-sm"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Export PDF
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleExportPPT}
+              className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/10 transition-colors text-slate-700 dark:text-slate-300 shadow-sm"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Export PPT
+            </button>
+            <button 
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/10 transition-colors text-slate-700 dark:text-slate-300 shadow-sm"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export PDF
+            </button>
+          </div>
         )}
       </div>
 
@@ -301,22 +351,40 @@ export default function CopilotPage() {
 
       {/* Input Area */}
       <div className="p-4 bg-white dark:bg-[#111] border-t border-slate-200 dark:border-white/10 z-10">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative flex items-center">
-          <input
-            type="text"
-            value={input}
-            onChange={handleInputChange}
-            disabled={isLoading}
-            placeholder="Ask about competitors, strategies, or recent reports..."
-            className="w-full pl-6 pr-14 py-4 bg-slate-50 dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-1 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white placeholder-slate-400 transition-all disabled:opacity-50 shadow-sm"
-          />
-          <button
-            type="submit"
-            disabled={!input?.trim() || isLoading}
-            className="absolute right-3 w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 dark:disabled:bg-white/5 text-white disabled:text-slate-400 flex items-center justify-center transition-colors shadow-sm"
-          >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
-          </button>
+        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative flex flex-col gap-3">
+          <div className="flex items-center justify-between px-2">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isDeepResearch ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'}`}>
+                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isDeepResearch ? 'translate-x-4.5' : 'translate-x-1'}`} />
+              </div>
+              <span className={`text-xs font-medium transition-colors ${isDeepResearch ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
+                Deep Research <span className="text-[10px] opacity-70">(Multi-step reasoning)</span>
+              </span>
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={isDeepResearch}
+                onChange={(e) => setIsDeepResearch(e.target.checked)}
+              />
+            </label>
+          </div>
+          <div className="relative flex items-center w-full">
+            <input
+              type="text"
+              value={input}
+              onChange={handleInputChange}
+              disabled={isLoading}
+              placeholder={isDeepResearch ? "Ask a complex strategic question..." : "Ask about competitors, strategies, or recent reports..."}
+              className="w-full pl-6 pr-14 py-4 bg-slate-50 dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-1 focus:ring-indigo-500 outline-none text-slate-900 dark:text-white placeholder-slate-400 transition-all disabled:opacity-50 shadow-sm"
+            />
+            <button
+              type="submit"
+              disabled={!input?.trim() || isLoading}
+              className="absolute right-3 w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 dark:disabled:bg-white/5 text-white disabled:text-slate-400 flex items-center justify-center transition-colors shadow-sm"
+            >
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
+            </button>
+          </div>
         </form>
         <p className="text-center text-[10px] text-slate-400 mt-3 font-medium uppercase tracking-widest">
           Nexus Copilot can make mistakes. Verify critical strategic decisions.

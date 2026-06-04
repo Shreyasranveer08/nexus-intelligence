@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json();
+    const { messages, isDeepResearch } = await req.json();
     
     // Auth Check
     const supabase = await createClient();
@@ -46,13 +46,22 @@ export async function POST(req: NextRequest) {
       : `\n\n(No specific database records found for this query. Rely on general knowledge but inform the user.)\n`;
 
     // 3. Define System Instruction
-    const systemInstruction = `You are Nexus Copilot, an elite deep-research analyst and strategic intelligence advisor. 
+    const baseInstruction = `You are Nexus Copilot, an elite deep-research analyst and strategic intelligence advisor. 
 You function exactly like a high-end research engine (like Perplexity).
 Your goal is to provide deeply analytical, comprehensively researched, and structured answers.
 Always structure your response with clear headings, bullet points, and actionable takeaways.
 Do not use generic fluff. Dive straight into data, facts, and strategic insights.
 
 ${contextText}`;
+
+    const deepResearchInstruction = `\n\n[DEEP RESEARCH MODE ENABLED]
+The user has requested a comprehensive, multi-step deep dive. You MUST:
+1. Think step-by-step. Break down the query into its core strategic components.
+2. Analyze multiple angles (e.g., market impact, competitor response, internal risks).
+3. If the user asks for an Executive Report, use formal consulting frameworks (e.g. SWOT, Porter's Five Forces).
+4. Provide an exhaustive, heavily structured response that reads like a premium strategy memo.`;
+
+    const systemInstruction = isDeepResearch ? baseInstruction + deepResearchInstruction : baseInstruction;
 
     // 4. Fetch Response from RapidAPI Perplexity
     try {
