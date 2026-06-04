@@ -42,9 +42,10 @@ async function run() {
       console.log(`✅ RAG Retrieval successful. Found ${relevantDocs?.length || 0} documents.`);
     }
 
-    console.log("\n4. Testing Tool Calling & Generation with gemini-2.0-flash...");
+    console.log("\n4. Testing Tool Calling & Generation with gemini-2.5-flash...");
     const result = await streamText({
-      model: google('gemini-2.0-flash'),
+      model: google('gemini-2.5-flash'),
+      system: "You are an elite strategic intelligence advisor. If the user asks to compare competitors, you MUST call the generateComparisonChart tool.",
       messages: [{ role: 'user', content: prompt }],
       tools: {
         generateComparisonChart: tool({
